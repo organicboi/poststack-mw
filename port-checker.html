@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Middleware Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      .result {
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 Quick Middleware Port Checker</h1>
+    <p>
+      This page will test both port 3001 and 3002 to see which one your
+      middleware is running on.
+    </p>
+
+    <button onclick="testBothPorts()">Test Both Ports</button>
+    <button onclick="testPort3001()">Test Port 3001</button>
+    <button onclick="testPort3002()">Test Port 3002</button>
+
+    <div id="results"></div>
+
+    <script>
+      async function testPort(port) {
+        try {
+          const response = await fetch(`http://localhost:${port}/auth/health`);
+          const data = await response.json();
+
+          if (response.ok) {
+            return {
+              port,
+              success: true,
+              message: `✅ Middleware is running on port ${port}`,
+              data: data,
+            };
+          } else {
+            return {
+              port,
+              success: false,
+              message: `❌ Port ${port} responded with error ${response.status}`,
+              data: data,
+            };
+          }
+        } catch (error) {
+          return {
+            port,
+            success: false,
+            message: `❌ Cannot connect to port ${port}: ${error.message}`,
+            data: null,
+          };
+        }
+      }
+
+      async function testBothPorts() {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<div class="info">Testing both ports...</div>';
+
+        const port3001 = await testPort(3001);
+        const port3002 = await testPort(3002);
+
+        let html = '<h3>Test Results:</h3>';
+
+        // Test port 3001
+        html += `<div class="result ${port3001.success ? 'success' : 'error'}">
+                <strong>Port 3001:</strong> ${port3001.message}
+                ${
+                  port3001.data
+                    ? `<br><small>Response: ${JSON.stringify(
+                        port3001.data
+                      )}</small>`
+                    : ''
+                }
+            </div>`;
+
+        // Test port 3002
+        html += `<div class="result ${port3002.success ? 'success' : 'error'}">
+                <strong>Port 3002:</strong> ${port3002.message}
+                ${
+                  port3002.data
+                    ? `<br><small>Response: ${JSON.stringify(
+                        port3002.data
+                      )}</small>`
+                    : ''
+                }
+            </div>`;
+
+        // Recommendation
+        if (port3001.success && port3002.success) {
+          html +=
+            '<div class="info"><strong>Both ports are working!</strong> You have multiple middleware instances running.</div>';
+        } else if (port3001.success) {
+          html +=
+            '<div class="info"><strong>Recommendation:</strong> Use port 3001 in your test files (this is the default).</div>';
+        } else if (port3002.success) {
+          html +=
+            '<div class="info"><strong>Recommendation:</strong> Use port 3002 in your test files (you have PORT=3002 set in environment).</div>';
+        } else {
+          html +=
+            '<div class="error"><strong>No middleware found!</strong> Make sure to start the middleware first with "npm run dev".</div>';
+        }
+
+        resultsDiv.innerHTML = html;
+      }
+
+      async function testPort3001() {
+        const result = await testPort(3001);
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `<div class="result ${
+          result.success ? 'success' : 'error'
+        }">
+                ${result.message}
+                ${
+                  result.data
+                    ? `<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`
+                    : ''
+                }
+            </div>`;
+      }
+
+      async function testPort3002() {
+        const result = await testPort(3002);
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `<div class="result ${
+          result.success ? 'success' : 'error'
+        }">
+                ${result.message}
+                ${
+                  result.data
+                    ? `<br><pre>${JSON.stringify(result.data, null, 2)}</pre>`
+                    : ''
+                }
+            </div>`;
+      }
+
+      // Auto-test on page load
+      window.addEventListener('load', testBothPorts);
+    </script>
+  </body>
+</html>
