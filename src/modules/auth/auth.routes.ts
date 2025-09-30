@@ -158,12 +158,21 @@ router.get(
   })
 );
 
-// Health check
+// Health check for auth routes - no authentication required
 router.get('/health', (req: Request, res: Response) => {
   res.json({
     success: true,
     message: 'Auth middleware is healthy',
     timestamp: new Date().toISOString(),
+    routes: [
+      'POST /api/auth/register',
+      'POST /api/auth/login',
+      'POST /api/auth/logout',
+      'GET /api/auth/me',
+      'POST /api/auth/reset-password',
+      'GET /api/auth/oauth/:provider',
+      'GET /api/auth/callback',
+    ],
   });
 });
 

@@ -4,13 +4,23 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './common/config';
-import { errorHandler, requestIdMiddleware, setupErrorHandling } from './middleware/errorHandler';
+import {
+  errorHandler,
+  requestIdMiddleware,
+  setupErrorHandling,
+} from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { requestLogger } from './middleware/requestLogger';
 
 // Import route controllers
 import authController from './modules/auth';
 import workspaceController from './modules/workspace';
+import usersController from './modules/users';
+import billingController from './modules/billing';
+import postsController from './modules/posts';
+import socialTokensController from './modules/social-tokens';
+import webhooksController from './modules/webhooks';
+import postizIntegrationController from './modules/postiz-integration';
 import proxyController from './modules/proxy';
 import { backendProxy } from './modules/proxy/backend.proxy';
 
@@ -55,13 +65,23 @@ app.get('/health', (_, res) => {
   });
 });
 
-// Apply API routes
+// AUTH ROUTES - These should NOT require authentication
+// Keep both /auth and /api/auth for compatibility
 app.use('/auth', authController);
-app.use('/workspaces', workspaceController);
+app.use('/api/auth', authController);
+
+// Apply API routes (these DO require authentication)
+app.use('/api/workspaces', workspaceController);
+app.use('/api/users', usersController);
+app.use('/api/billing', billingController);
+app.use('/api/posts', postsController);
+app.use('/api', socialTokensController);
+app.use('/api', webhooksController);
+app.use('/api', postizIntegrationController);
 
 // Define specific calendar API routes before general proxy routes
 // Test route
-app.get('/api/test', (req, res) => {
+app.get('/api/test', (_req, res) => {
   res.json({ message: 'Calendar controller test route works!' });
 });
 
@@ -71,7 +91,7 @@ app.get('/api/postiz/posts', (req, res) => {
   return backendProxy.proxyRequestWithServiceKey(req, res);
 });
 
-app.get('/api/auth/session', (req, res) => {
+app.get('/api/postiz/auth/session', (req, res) => {
   console.log('Processing auth session request');
   return backendProxy.proxyRequestWithServiceKey(req, res);
 });
@@ -86,7 +106,7 @@ app.get('/api/postiz/posts/tags', (req, res) => {
   return backendProxy.proxyRequestWithServiceKey(req, res);
 });
 
-// All other API routes (require authentication)
+// All other API routes (require authentication) - This should be LAST
 app.use('/api', proxyController);
 
 // Apply error handling middleware (must be last)
@@ -99,14 +119,16 @@ app.listen(PORT, () => {
   console.log(`
   ┌─────────────────────────────────────────────────┐
   │                                                 │
-  │   Middleware Server running in ${config.server.environment} mode          │
+  │   Middleware Server v2.0 with Core Modules      │
   │   http://localhost:${PORT}                          │
+  │   Environment: ${config.server.environment.padEnd(10)}                  │
   │                                                 │
   └─────────────────────────────────────────────────┘
   `);
 
   console.log(`🔗 Backend URL: ${config.backend.url}`);
   console.log(`🌐 Frontend URL: ${config.frontend.url}`);
+  console.log(`📊 Features: Auth, Users, Workspaces, Billing, Posts`);
 
   if (config.serviceRole.key) {
     console.log(

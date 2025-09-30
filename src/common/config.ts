@@ -10,7 +10,11 @@ export const config = {
     environment: process.env.NODE_ENV || 'development',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+      : process.env.FRONTEND_URL ||
+        process.env.CORS_ORIGIN ||
+        'http://localhost:3001',
     credentials: true,
   },
   supabase: {
@@ -32,5 +36,24 @@ export const config = {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict' as const,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  },
+  dodo: {
+    apiUrl: process.env.DODO_PAYMENTS_API_URL || 'https://api.dodo.dev',
+    apiKey: process.env.DODO_PAYMENTS_API_KEY || '',
+    webhookSecret: process.env.DODO_PAYMENTS_WEBHOOK_SECRET || '',
+    planIds: {
+      STARTER: {
+        monthly: 'plan_starter_monthly',
+        yearly: 'plan_starter_yearly',
+      },
+      PROFESSIONAL: {
+        monthly: 'plan_professional_monthly',
+        yearly: 'plan_professional_yearly',
+      },
+      ENTERPRISE: {
+        monthly: 'plan_enterprise_monthly',
+        yearly: 'plan_enterprise_yearly',
+      },
+    },
   },
 };
